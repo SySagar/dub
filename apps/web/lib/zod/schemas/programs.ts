@@ -15,6 +15,8 @@ export const ProgramSchema = z.object({
   slug: z.string(),
   logo: z.string().nullable(),
   brandColor: z.string().nullable(),
+  domain: z.string().nullable(),
+  url: z.string().nullable(),
   type: z.nativeEnum(ProgramType),
   cookieLength: z.number(),
   commissionAmount: z.number(),
@@ -23,8 +25,6 @@ export const ProgramSchema = z.object({
   recurringDuration: z.number().nullable(),
   recurringInterval: z.nativeEnum(CommissionInterval).nullable(),
   isLifetimeRecurring: z.boolean().nullable(),
-  domain: z.string().nullable(),
-  url: z.string().nullable(),
   wordmark: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -62,13 +62,20 @@ export const ProgramEnrollmentSchema = z.object({
   createdAt: z.date(),
 });
 
+export const ProgramInviteSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  shortLink: z.string(),
+  createdAt: z.date(),
+});
+
 export const getProgramMetricsQuerySchema = z.object({
   interval: z.enum(intervals).default("30d"),
   start: parseDateSchema.optional(),
   end: parseDateSchema.optional(),
 });
 
-export const ProgramInviteSchema = z.object({
+export const PartnerProgramInviteSchema = z.object({
   id: z.string(),
   email: z.string(),
   program: ProgramSchema,

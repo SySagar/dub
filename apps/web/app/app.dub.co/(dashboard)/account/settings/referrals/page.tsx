@@ -1,17 +1,21 @@
 import { getSession } from "@/lib/auth/utils";
 import { dub } from "@/lib/dub";
+import LayoutLoader from "@/ui/layout/layout-loader";
 import { AnimatedEmptyState } from "@/ui/shared/animated-empty-state";
 import { DubWidget } from "@dub/embed-react";
-import {
-  CursorRays,
-  Hyperlink,
-  InvoiceDollar,
-  UserCheck,
-} from "@dub/ui/src/icons";
+import { CursorRays, Hyperlink, InvoiceDollar, UserCheck } from "@dub/ui/icons";
+import { Suspense } from "react";
 
 export const dynamic = "auto";
 
-export default async function ReferralsPage() {
+export default function ReferralsPage() {
+  return (
+    <Suspense fallback={<LayoutLoader />}>
+      <ReferralsPageRSC />
+    </Suspense>
+  );
+}
+async function ReferralsPageRSC() {
   const session = await getSession();
   const referralLinkId = session?.user.referralLinkId;
 

@@ -106,10 +106,9 @@ export default function Toggle({
   page?: "analytics" | "events";
 }) {
   const { slug, programSlug } = useParams();
-  const { plan, flags, createdAt } = useWorkspace();
+  const { plan, createdAt } = useWorkspace();
 
-  const { router, queryParams, searchParamsObj, getQueryString } =
-    useRouterStuff();
+  const { queryParams, searchParamsObj, getQueryString } = useRouterStuff();
 
   const {
     selectedTab,
@@ -452,50 +451,46 @@ export default function Toggle({
           ? [LinkFilterItem, CustomerFilterItem]
           : [
               ...(canManageCustomers ? [CustomerFilterItem] : []),
-              ...(flags?.linkFolders
-                ? [
-                    {
-                      key: "folderId",
-                      icon: Folder,
-                      label: "Folder",
-                      shouldFilter: !foldersAsync,
-                      getOptionIcon: (value, props) => {
-                        const folderName = props.option?.label;
-                        const folder = folders?.find(
-                          ({ name }) => name === folderName,
-                        );
+              {
+                key: "folderId",
+                icon: Folder,
+                label: "Folder",
+                shouldFilter: !foldersAsync,
+                getOptionIcon: (value, props) => {
+                  const folderName = props.option?.label;
+                  const folder = folders?.find(
+                    ({ name }) => name === folderName,
+                  );
 
-                        return folder ? (
-                          <FolderIcon
-                            folder={folder}
-                            shape="square"
-                            iconClassName="size-3"
-                          />
-                        ) : null;
-                      },
-                      options: loadingFolders
-                        ? null
-                        : [
-                            ...(folders || []),
-                            // Add currently filtered folder if not already in the list
-                            ...(selectedFolder &&
-                            !folders?.find((f) => f.id === selectedFolder.id)
-                              ? [selectedFolder]
-                              : []),
-                          ].map((folder) => ({
-                            value: folder.id,
-                            icon: (
-                              <FolderIcon
-                                folder={folder}
-                                shape="square"
-                                iconClassName="size-3"
-                              />
-                            ),
-                            label: folder.name,
-                          })),
-                    },
-                  ]
-                : []),
+                  return folder ? (
+                    <FolderIcon
+                      folder={folder}
+                      shape="square"
+                      iconClassName="size-3"
+                    />
+                  ) : null;
+                },
+                options: loadingFolders
+                  ? null
+                  : [
+                      ...(folders || []),
+                      // Add currently filtered folder if not already in the list
+                      ...(selectedFolder &&
+                      !folders?.find((f) => f.id === selectedFolder.id)
+                        ? [selectedFolder]
+                        : []),
+                    ].map((folder) => ({
+                      value: folder.id,
+                      icon: (
+                        <FolderIcon
+                          folder={folder}
+                          shape="square"
+                          iconClassName="size-3"
+                        />
+                      ),
+                      label: folder.name,
+                    })),
+              },
               {
                 key: "tagIds",
                 icon: Tag,
@@ -882,7 +877,7 @@ export default function Toggle({
 
   const dateRangePicker = (
     <DateRangePicker
-      className="w-full sm:min-w-[200px] md:w-fit"
+      className="w-full sm:min-w-[160px] md:w-fit lg:min-w-[200px]"
       align={dashboardProps ? "end" : "center"}
       value={
         start && end
@@ -955,10 +950,13 @@ export default function Toggle({
     />
   );
 
+  // TODO: [PageContent] Remove once all pages are migrated to the new PageContent
+  const isAppPage = !dashboardProps && !adminPage && !partnerPage;
+
   return (
     <>
       <div
-        className={cn("py-3 md:py-3", {
+        className={cn("py-3 md:py-3", isAppPage && "pt-0 md:pt-0", {
           "sticky top-14 z-10 bg-neutral-50": dashboardProps,
           "sticky top-16 z-10 bg-neutral-50": adminPage,
           "shadow-md": scrolled && dashboardProps,
@@ -967,6 +965,7 @@ export default function Toggle({
         <div
           className={cn(
             "mx-auto flex w-full max-w-screen-xl flex-col gap-2 px-3 lg:px-10",
+            isAppPage && "lg:px-6",
             {
               "md:h-10": key,
             },
@@ -1028,12 +1027,7 @@ export default function Toggle({
                       <>
                         {domain && key && <ShareButton />}
                         <Link
-                          href={
-                            dashboardProps
-                              ? "https://d.to/events"
-                              : `/${partnerPage ? `programs/${programSlug}` : slug}/events${getQueryString()}`
-                          }
-                          {...(dashboardProps ? { target: "_blank" } : {})}
+                          href={`/${partnerPage ? `programs/${programSlug}/` : adminPage ? "" : `${slug}/`}events${getQueryString()}`}
                         >
                           <Button
                             variant="secondary"
@@ -1050,7 +1044,7 @@ export default function Toggle({
                     {page === "events" && (
                       <>
                         <Link
-                          href={`/${partnerPage ? `programs/${programSlug}` : slug}/analytics${getQueryString()}`}
+                          href={`/${partnerPage ? `programs/${programSlug}/` : adminPage ? "" : `${slug}/`}analytics${getQueryString()}`}
                         >
                           <Button
                             variant="secondary"
@@ -1072,7 +1066,12 @@ export default function Toggle({
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-screen-xl px-3 lg:px-10">
+      <div
+        className={cn(
+          "mx-auto w-full max-w-screen-xl px-3 lg:px-10",
+          isAppPage && "lg:px-6",
+        )}
+      >
         <Filter.List
           filters={filters}
           activeFilters={[

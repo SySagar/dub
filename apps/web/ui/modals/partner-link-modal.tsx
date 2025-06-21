@@ -3,7 +3,7 @@
 import { mutateSuffix } from "@/lib/swr/mutate";
 import useProgramEnrollment from "@/lib/swr/use-program-enrollment";
 import { PartnerProfileLinkProps } from "@/lib/types";
-import { Lock, X } from "@/ui/shared/icons";
+import { X } from "@/ui/shared/icons";
 import { QRCode } from "@/ui/shared/qr-code";
 import {
   Button,
@@ -17,7 +17,12 @@ import {
   useLocalStorage,
   useMediaQuery,
 } from "@dub/ui";
-import { ArrowTurnLeft, Pen2, QRCode as QRCodeIcon } from "@dub/ui/icons";
+import {
+  ArrowTurnLeft,
+  Pen2,
+  PenWriting,
+  QRCode as QRCodeIcon,
+} from "@dub/ui/icons";
 import {
   cn,
   getDomainWithoutWWW,
@@ -26,6 +31,7 @@ import {
   regexEscape,
 } from "@dub/utils";
 import { AnimatePresence, motion } from "framer-motion";
+import { useParams } from "next/navigation";
 import {
   Dispatch,
   SetStateAction,
@@ -168,6 +174,7 @@ function PartnerLinkModalContent({
   isDefaultLink?: boolean;
   setShowPartnerLinkModal: Dispatch<SetStateAction<boolean>>;
 }) {
+  const { programSlug } = useParams();
   const { programEnrollment } = useProgramEnrollment();
   const destinationDomain =
     getDomainWithoutWWW(programEnrollment?.program?.url || "https://dub.co") ??
@@ -252,7 +259,10 @@ function PartnerLinkModalContent({
             return;
           }
 
-          await mutateSuffix(`/links`);
+          await Promise.all([
+            mutateSuffix(`/api/partner-profile/programs/${programSlug}`),
+            mutateSuffix("/links"),
+          ]);
 
           if (!link) {
             try {
@@ -284,6 +294,61 @@ function PartnerLinkModalContent({
         </div>
 
         <div className="flex w-full flex-col gap-6">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="key"
+                  className="block text-sm font-medium text-neutral-700"
+                >
+                  Short Link
+                </label>
+                <InfoTooltip
+                  content={
+                    <SimpleTooltipContent
+                      title="This is the short link that will redirect to your destination URL."
+                      cta="Learn more."
+                      href="https://dub.co/help/article/how-to-create-link"
+                    />
+                  }
+                />
+              </div>
+              {lockKey && (
+                <button
+                  className="flex h-5 items-center space-x-2 text-sm text-neutral-500 transition-all duration-75 hover:text-black active:scale-95"
+                  type="button"
+                  onClick={() => {
+                    window.confirm(
+                      "Updating your short link key could potentially break existing links. Are you sure you want to continue?",
+                    ) && setLockKey(false);
+                  }}
+                >
+                  <PenWriting className="size-3.5" />
+                </button>
+              )}
+            </div>
+            <div className="mt-2 flex rounded-md">
+              <span className="inline-flex items-center rounded-l-md border border-r-0 border-neutral-300 bg-neutral-50 px-3 text-neutral-500 sm:text-sm">
+                {shortLinkDomain}
+              </span>
+              <input
+                {...register("key", { required: true })}
+                type="text"
+                id="key"
+                autoFocus={!isMobile}
+                disabled={lockKey}
+                className={cn(
+                  "block w-full rounded-r-md border-neutral-300 text-neutral-900 placeholder-neutral-400 focus:border-neutral-500 focus:outline-none focus:ring-neutral-500 sm:text-sm",
+                  {
+                    "cursor-not-allowed border border-neutral-300 bg-neutral-100 text-neutral-500":
+                      lockKey,
+                  },
+                )}
+                placeholder="short-link"
+              />
+            </div>
+          </div>
+
           <div>
             <div className="flex items-center gap-2">
               <label
@@ -318,7 +383,6 @@ function PartnerLinkModalContent({
                   type="text"
                   id="url"
                   placeholder="(optional)"
-                  autoFocus={!isMobile}
                   onPaste={(e: React.ClipboardEvent<HTMLInputElement>) => {
                     e.preventDefault();
                     // if pasting in a URL, extract the pathname
@@ -334,60 +398,6 @@ function PartnerLinkModalContent({
                 />
               </div>
             )}
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="key"
-                  className="block text-sm font-medium text-neutral-700"
-                >
-                  Short Link
-                </label>
-                <InfoTooltip
-                  content={
-                    <SimpleTooltipContent
-                      title="This is the short link that will redirect to your destination URL."
-                      cta="Learn more."
-                      href="https://dub.co/help/article/how-to-create-link"
-                    />
-                  }
-                />
-              </div>
-              {lockKey && (
-                <button
-                  className="flex h-5 items-center space-x-2 text-sm text-neutral-500 transition-all duration-75 hover:text-black active:scale-95"
-                  type="button"
-                  onClick={() => {
-                    window.confirm(
-                      "Updating your short link key could potentially break existing links. Are you sure you want to continue?",
-                    ) && setLockKey(false);
-                  }}
-                >
-                  <Lock className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-            <div className="mt-2 flex rounded-md">
-              <span className="inline-flex items-center rounded-l-md border border-r-0 border-neutral-300 bg-neutral-50 px-3 text-neutral-500 sm:text-sm">
-                {shortLinkDomain}
-              </span>
-              <input
-                {...register("key", { required: true })}
-                type="text"
-                id="key"
-                disabled={lockKey}
-                className={cn(
-                  "block w-full rounded-r-md border-neutral-300 text-neutral-900 placeholder-neutral-400 focus:border-neutral-500 focus:outline-none focus:ring-neutral-500 sm:text-sm",
-                  {
-                    "cursor-not-allowed border border-neutral-300 bg-neutral-100 text-neutral-500":
-                      lockKey,
-                  },
-                )}
-                placeholder="short-link"
-              />
-            </div>
           </div>
 
           <div>
